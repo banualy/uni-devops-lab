@@ -1,14 +1,14 @@
 ---
-# Application configuration
+#app configuration
 app_image: student-portal:1.0
 app_port: 8080
 container_port: 5000
 app_dir: /opt/student-portal
 
-# Docker repository
+#repository
 docker_repo_url: https://download.docker.com/linux/rhel/docker-ce.repo
 
-# Docker packages
+#packages
 docker_packages:
   - docker-ce
   - docker-ce-cli
