@@ -1,0 +1,93 @@
+---
+- name: Deploy University Student Portal
+  hosts: app_servers
+  become: true
+
+  tasks:
+    - name: Check current DNS configuration
+      ansible.builtin.command:
+        argv:
+          - nmcli
+          - -g
+          - ipv4.dns,ipv4.ignore-auto-dns
+          - connection
+          - show
+          - enp2s0
+      register: current_dns
+      changed_when: false
+
+    - name: Configure reliable DNS servers
+      ansible.builtin.command:
+        argv:
+          - nmcli
+          - connection
+          - modify
+          - enp2s0
+          - ipv4.dns
+          - "8.8.8.8 1.1.1.1"
+          - ipv4.ignore-auto-dns
+          - "yes"
+      when: "'8.8.8.8' not in current_dns.stdout or '1.1.1.1' not in current_dns.stdout or 'yes' not in current_dns.stdout"
+      register: dns_config
+
+    - name: Apply network DNS configuration
+      ansible.builtin.command:
+        argv:
+          - nmcli
+          - device
+          - reapply
+          - enp2s0
+      when: dns_config is changed
+
+    - name: Download Docker repository configuration
+      ansible.builtin.get_url:
+        url: "{{ docker_repo_url }}"
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: '0644'
+
+    - name: Install Docker and Docker Compose
+      ansible.builtin.dnf:
+        name: "{{ docker_packages }}"
+        state: present
+
+    - name: Enable and start Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy application files to app server
+      ansible.builtin.copy:
+        src: ../app
+        dest: "{{ app_dir }}/"
+
+    - name: Deploy Docker Compose configuration
+      ansible.builtin.template:
+        src: templates/compose.yml.j2
+        dest: "{{ app_dir }}/compose.yml"
+        mode: '0644'
+
+    - name: Build and start application with Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+
+    - name: Wait for application health endpoint
+      ansible.builtin.uri:
+        url: "http://localhost:{{ app_port }}/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      retries: 10
+      delay: 5
+      until: health_check.status == 200
+
+    - name: Display application health result
+      ansible.builtin.debug:
+        msg: "Portal health check: {{ health_check.json }}"
