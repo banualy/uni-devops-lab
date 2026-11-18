@@ -61,3 +61,5 @@ Tətbiqə daxil olmaq üçün:
 App Server Red Hat-a qeydiyyatdan keçirilmədiyi üçün paketləri yükləyə bilmirdim. `subscription-manager register` əmri ilə serveri qeydiyyatdan keçirdikdən sonra bu problem həll olundu.
 
 Daha sonra Docker Hub-dan image-ləri yükləyərkən DNS xətası yarandı.  Ansible vasitəsilə DNS ünvanlarını `8.8.8.8` və `1.1.1.1` olaraq dəyişdim,  image-lərin yüklənməsi mümkün oldu.
+
+İlk başdan `main` branch-i ayrıca yaratmamışdım.  `main` branch Stage 1-in commit-i ilə eyni idi və Pull Request yaratmaq olmurdu. Boş bir ilkin commit yaradaraq `main` branch-i ayrıca düzəltdim. Sonra `rebase` elədim, dəyişikliklər yeni `main` branch-dən davam etsin. Mergeləri elədikdən sonra sonda  local `main` branch-i `git pull --ff-only origin main`  ilə githubdakı `main` branch-ə fast-forward elədim.
