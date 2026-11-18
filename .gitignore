@@ -1,0 +1,10 @@
+.env
+.env.*
+*.log
+logs/
+*.pem
+*.key
+id_rsa
+id_ed25519
+__pycache__/
+*.pyc
